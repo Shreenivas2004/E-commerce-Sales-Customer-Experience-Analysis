@@ -3,25 +3,7 @@
 End-to-end analysis of the Olist Brazilian e-commerce dataset: raw CSVs loaded into MySQL with Python, modelled with SQL views and master tables, and presented in a 5-page Power BI dashboard.
 
 **Tools:** Python (pandas, SQLAlchemy), MySQL, Power BI, DAX
-
----
-
-## Key findings
-
-> Fill these from your own results before publishing. Use all-time figures, not slicer-filtered ones.
-
-1. **Late delivery hurts reviews.** Orders delivered on time or early average **[X]** stars, falling to **[Y]** when 8+ days late (`vw_late_vs_review`).
-2. **Few customers come back.** Only **[X%]** of customers placed more than one order (`vw_repeat_rate`), so retention is a clear opportunity.
-3. **Sales are concentrated in the South-East.** São Paulo alone brings in **[X%]** of revenue, and the top three states **[Y%]**.
-4. **Remote states pay more for shipping.** Freight is **[X%]** of price in the highest-freight states against **[Y%]** overall, and these states also see **[late % / delivery days]**.
-5. **Seller revenue is concentrated.** The top 10% of sellers earn **[X%]** of revenue.
-
-**Recommendations:** **[2-3 actions that follow from the findings, e.g. recruit sellers outside the South-East, review shipping fees for high-freight states, set delivery estimates by state, run a retention offer]**
-
-Findings are associations, not proven causes. See [Limitations](#limitations).
-
----
-
+--
 ## Dashboard
 
 | Page | What it answers |
@@ -38,15 +20,11 @@ Findings are associations, not proven causes. See [Limitations](#limitations).
 ![Customers and sellers](images/customers_sellers.png)
 ![Listing quality](images/listing_quality.png)
 
-The Power BI file is in `powerbi/`. It stores its data inside the file, so the visuals work without a database, but refreshing needs the MySQL setup below.
-
----
-
 ## Data
 
 - **Source:** [Olist Brazilian E-Commerce Public Dataset](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce) on Kaggle. About 100,000 orders from 2016 to 2018.
-- **Tables loaded (8):** customers, orders, order items, order payments, order reviews, products, sellers, and the product category name translation.
-- The geolocation table is not loaded. The dataset has no cost or profit data, so the project reports revenue, not profit.
+- **Tables loaded (8):** customers, orders, order items, order payments, order reviews, products, sellers, product category name translation, Geolocation.
+-  The dataset has no cost or profit data, so the project reports revenue, not profit.
 
 ---
 
@@ -60,7 +38,17 @@ The Power BI file is in `powerbi/`. It stores its data inside the file, so the v
 │   ├── master_table.sql          # master_orders and master_items tables
 │   ├── 01.sql                    # views for the analysis plan
 │   └── 02.sql                    # views for the 10 business questions
-├── powerbi/                   # Power BI file
+│── Data Files 
+│   ├──oilst_customer_dataset.csv
+│   ├──oilst_geolocation_dataset.csv
+│   ├──oilst_order_items_dataset.csv
+│   ├──oilst_order_payments_dataset.csv
+│   ├──oilst_order_reviews_dataset.csv
+│   ├──oilst_order_dataset.csv
+│   ├──oilst_products_dataset.csv
+│   ├──oilst_sellers_dataset.csvde
+│   └──product_category_name_translation.csv
+├── Dashboard.pbix
 ├── images/                    # dashboard screenshots
 └── README.md
 ```
@@ -83,7 +71,7 @@ The Power BI file is in `powerbi/`. It stores its data inside the file, so the v
    ```sql
    CREATE DATABASE oilst;
    ```
-4. Put the CSV files where the script expects them and run it. It asks for your MySQL password and prints progress as each table loads:
+4. run the script. It asks for your MySQL password and prints progress as each table loads:
    ```
    python import_table_to_sql.py
    ```
@@ -98,7 +86,6 @@ The Power BI file is in `powerbi/`. It stores its data inside the file, so the v
 
 If the counts match, the tables and views are ready to query or connect to Power BI.
 
-**Rebuild rule:** the master tables are snapshots. If you reload the raw tables, rerun `master_table.sql` and the views.
 
 ---
 
@@ -138,15 +125,3 @@ An order can have several items, payments and reviews. Joining everything into o
 - **Association, not causation.** Links between delivery, freight, listing quality and sales cannot be proven causal. The data has no shipping distance.
 - **Delivered orders only** for revenue and delivery metrics, over 2016 to 2018. The first and last months of the data are partial.
 - **Average sales per product is skewed** by a few bestsellers, so it is read together with the share of products that sold.
-
----
-
-## Troubleshooting
-
-| Problem | Fix |
-|---|---|
-| `Authentication plugin 'caching_sha2_password' is not supported` | `pip install --upgrade mysql-connector-python` |
-| Password contains `@` and the connection fails | Build the engine with `sqlalchemy.engine.URL.create(...)` instead of a URL string |
-| `Illegal mix of collations` | Run `SET collation_connection = utf8mb4_0900_ai_ci;` in the same session |
-| Syntax error near `OVER` | MySQL is older than 8.0. Upgrade it |
-| Power BI cannot find the MySQL driver | Install MySQL Connector/NET and restart Power BI Desktop |
